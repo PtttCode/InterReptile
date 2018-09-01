@@ -5,6 +5,7 @@ import re
 import os
 import sys
 import json
+import threading
 import time
 
 from lxml import etree
@@ -12,10 +13,11 @@ from PIL import Image
 from PIL import ImageFile
 import startUi as SUI
 
+
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 #全局变量
-num=1
+# num=1
 
 
 #浏览器请求抬头
@@ -110,7 +112,7 @@ def getPagesTotal(html):
 
 #下载图片    
 def get_pic(html,htm):
-    global num
+    num = 1
     #寻找链接
     #headers['Host']='i1.umei.cc'
     get_pic=find_jpg(html)
@@ -214,10 +216,21 @@ def get_html(html):
     get_htm={}.fromkeys(get_first).keys()
     get_htm=list(get_htm)
     print(get_htm)
+    length = int(len(get_htm)/2)
     #调用rm_ele删除重复Html
-    get_htm=rm_ele(get_htm)
+    #get_htm=rm_ele(get_htm)
+    list1 = get_htm[0:length]
+    list2 = get_htm[length:]
     print(len(get_htm))
-    
+
+    t1 = NewThread('thread1', list1)
+    t2 = NewThread('thread2', list2)
+
+    t1.start()
+    t2.start()
+
+    t1.join()
+    t2.join()
         
   #遍历页面并调用下载函数get_pic
     '''for htm in get_htm:
@@ -228,7 +241,25 @@ def get_html(html):
     #保存本次访问的Html
     save_html(get_htm)'''
    
-    
+
+
+class NewThread(threading.Thread):
+    def __init__(self, ThreadName, list):
+        threading.Thread.__init__(self)
+        self.list = list
+        self.ThreadName = ThreadName
+
+    def run(self):
+        for htm in self.list:
+            start = time.time()
+            # htm = 'https://www.sxtp.net' + htm
+            print(self.ThreadName+htm)
+            url = download(htm)
+            get_pic(url, htm)
+        end = time.time()
+        print(self.ThreadName+'End!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+        print('Time:{}'.format(end-start))
+
  
     
 url='http://www.27270.com/ent/meinvtupian/list_11_4.html'
